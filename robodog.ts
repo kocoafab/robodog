@@ -1,0 +1,520 @@
+/**
+* Control RoboDog 
+*/
+let legPos: number[][] = [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1], [1, 0, 0, 1], [0, 1, 1, 0], [1, 1, 0, 0], [0, 0, 1, 1], [1, 1, 1, 1]];
+//% groups='["동작", "LED", "소리", "센서"]'
+//% block="로보독" weight=80 color=#376db5 icon="\uf1b0"
+namespace robodog {
+    let isInit = 0;
+    let battery = 0;
+    let tof = 0;
+    let yaw = 0;
+    let controlYaw = 0;
+    let lastRawYaw = 0;
+    let hasYawSample = false;
+    let roll = 0;
+    let pitch = 0;
+    let button = 0;
+    let timerCnt = 0;
+    let txData = pins.createBuffer(48);
+    let rxPacketData = pins.createBuffer(100);
+    let rxPacketOffset = 0;
+    let rxPacketLength = 20;
+    let rxHeadMatchCount = 0;
+    let ledData = pins.createBuffer(34);
+    export let counter = 0;
+    let rotationWaitRelative = false;
+    let rotationWaitAbsolute = true;
+    let rotationToleranceDeg = 5;
+    let rotationTimeoutMs = 3000;
+    let rotationPollMs = 20;
+
+    function checksum(buf: Buffer): number {
+        let sum = 0;
+        if (buf[4] > buf.length)
+            return -1;
+        for (let i = 6; i < buf[4]; i++) {
+            sum += buf[i];
+        }
+        return sum & 0xFF;
+    }
+
+    function wrapYawDelta(currentYaw: number, previousYaw: number): number {
+        let delta = currentYaw - previousYaw
+        if (delta > 32767)
+            delta -= 65536
+        else if (delta < -32768)
+            delta += 65536
+        return delta
+    }
+
+
+    loops.everyInterval(10, function () {
+        if (isInit == 0) {
+            serial.setRxBufferSize(128)
+            serial.redirect(SerialPin.P0, SerialPin.P1, BaudRate.BaudRate115200);
+            txData[0] = 0x26; txData[1] = 0xA8; txData[2] = 0x14; txData[3] = 0x81; txData[4] = 48;
+            isInit = 1;
+        }
+
+        consumeSerialRx();
+
+        if ((txData[14] & 0xC0) == 0xC0) {
+            if ((timerCnt % 2) == 0) {
+                txData[14] = ledData[0];
+                for (let p = 0; p < 16; p++)
+                    txData[24 + p] = ledData[2 + p];
+            }
+            else {
+                txData[14] = ledData[1];
+                for (let p = 0; p < 16; p++)
+                    txData[24 + p] = ledData[18 + p];
+            }
+        }
+
+        txData[5] = checksum(txData);
+        serial.writeBuffer(txData);
+        timerCnt += 1;
+    });
+
+    function consumeSerialRx(): void {
+        let data = serial.readBuffer(0);
+        consumeRxBytes(data);
+    }
+
+    function consumeRxBytes(data: Buffer): void {
+        for (let i = 0; i < data.length; i++) {
+            let value = data[i];
+            let received = value;
+
+            if (rxPacketOffset == 0) {
+                if (rxHeadMatchCount == 3)
+                    value = value & 0xF0
+
+                if (rxHeadMatchCount == 0) {
+                    if (value == 0x26)
+                        rxHeadMatchCount = 1
+                    else
+                        rxHeadMatchCount = 0
+                }
+                else if (rxHeadMatchCount == 1) {
+                    if (value == 0xA8)
+                        rxHeadMatchCount = 2
+                    else if (value == 0x26)
+                        rxHeadMatchCount = 1
+                    else
+                        rxHeadMatchCount = 0
+                }
+                else if (rxHeadMatchCount == 2) {
+                    if (value == 0x14)
+                        rxHeadMatchCount = 3
+                    else if (value == 0x26)
+                        rxHeadMatchCount = 1
+                    else
+                        rxHeadMatchCount = 0
+                }
+                else if (rxHeadMatchCount == 3) {
+                    if (value == 0x80) {
+                        rxHeadMatchCount = 0
+                        rxPacketOffset = 4
+                        rxPacketLength = 20
+                        rxPacketData[0] = 0x26
+                        rxPacketData[1] = 0xA8
+                        rxPacketData[2] = 0x14
+                        rxPacketData[3] = received
+                    }
+                    else if (received == 0x26)
+                        rxHeadMatchCount = 1
+                    else
+                        rxHeadMatchCount = 0
+                }
+            }
+            else {
+                rxPacketData[rxPacketOffset] = received
+                if (rxPacketOffset == 4) {
+                    let packetLength = received
+                    if (packetLength < 6 || packetLength > rxPacketData.length) {
+                        rxPacketOffset = 0
+                        rxPacketLength = 20
+                        continue
+                    }
+                    rxPacketLength = packetLength
+                }
+
+                rxPacketOffset += 1
+
+                if (rxPacketOffset == rxPacketLength) {
+                    if (checksum(rxPacketData) == rxPacketData[5]) {
+                        let packet = pins.createBuffer(rxPacketLength)
+                        for (let p = 0; p < rxPacketLength; p++)
+                            packet[p] = rxPacketData[p]
+                        handleRxPacket(packet);
+                    }
+                    rxPacketOffset = 0
+                    rxPacketLength = 20
+                }
+                else if (rxPacketOffset >= rxPacketData.length) {
+                    rxPacketOffset = 0
+                    rxPacketLength = 20
+                }
+            }
+        }
+    }
+
+    function handleRxPacket(packet: Buffer): void {
+        if (packet.length > 19) {
+            battery = packet[6]
+            tof = packet[7]
+            roll = Deflib.toSigned8(packet[8])
+            pitch = Deflib.toSigned8(packet[9])
+            yaw = Deflib.toSigned16((packet[11] << 8) | packet[10])
+            if (!hasYawSample)
+                controlYaw = yaw
+            else
+                controlYaw += wrapYawDelta(yaw, lastRawYaw);
+            lastRawYaw = yaw;
+            hasYawSample = true;
+            button = packet[16]
+        }
+    }
+
+
+    function check_modeChange(initValue: number, mode: number): void {
+        if (txData[15] != mode) {
+            for (let i = 16; i < 24; i++)
+                txData[i] = initValue;
+            txData[15] = mode;
+        }
+    }
+
+    function getHeadLedOffsets(what: Deflib.left_right): number[] {
+        // If future hardware/docs redefine physical left/right orientation, swap offsets here only.
+        switch (what) {
+            case Deflib.left_right.left:
+                return [0];
+            case Deflib.left_right.right:
+                return [8];
+            default:
+                return [0, 8];
+        }
+    }
+
+    function sanitizeRotationAngle(value: number): number {
+        value = Math.abs(Math.round(value))
+        value = value % 360
+        return value
+    }
+
+    function normalizeHeading360(value: number): number {
+        value = Math.round(value) % 360
+        if (value < 0)
+            value += 360
+        return value
+    }
+
+    function getShortestHeadingDelta(currentHeading: number, targetHeading: number): number {
+        let delta = normalizeHeading360(targetHeading - currentHeading)
+        if (delta > 180)
+            delta -= 360
+        return delta
+    }
+
+    function clearRotationCommand(): void {
+        txData[21] = 0
+        txData[22] = 0
+        txData[23] = 0
+    }
+
+    function writeRotationTarget(target: number, velocity: number): void {
+        check_modeChange(0, 1);
+        target = Deflib.constrain(Math.round(target), -32768, 32767)
+        txData[22] = target & 0xFF;
+        txData[23] = (target >> 8) & 0xFF;
+        txData[21] = Deflib.constrain(velocity, 10, 100);
+    }
+
+    function waitForRotationTarget(target: number): void {
+        let start = input.runningTime()
+        let targetHeading = normalizeHeading360(target)
+
+        while ((input.runningTime() - start) < rotationTimeoutMs) {
+            let currentHeading = normalizeHeading360(controlYaw)
+            if (Math.abs(getShortestHeadingDelta(currentHeading, targetHeading)) <= rotationToleranceDeg)
+                break
+            basic.pause(rotationPollMs)
+        }
+
+        clearRotationCommand()
+    }
+
+    function executeRotationTarget(target: number, velocity: number, waitForCompletion: boolean): void {
+        if (Math.round(target) == Math.round(controlYaw)) {
+            clearRotationCommand()
+            return
+        }
+
+        writeRotationTarget(target, velocity)
+        if (waitForCompletion)
+            waitForRotationTarget(target)
+    }
+
+    function planRelativeRotationTarget(dir: Deflib.rotate_dir, deg: number): number {
+        let angle = sanitizeRotationAngle(deg);
+        let delta = (dir == Deflib.rotate_dir.cw) ? angle : -1 * angle;
+        return controlYaw + delta;
+    }
+
+    function planAbsoluteRotationTarget(angle: number): number {
+        let currentHeading = normalizeHeading360(controlYaw);
+        let targetHeading = normalizeHeading360(sanitizeRotationAngle(angle));
+        let delta = getShortestHeadingDelta(currentHeading, targetHeading);
+        return controlYaw + delta;
+    }
+
+    //% blockId=robodog_headled_image_literal_v2
+    //% block="headled image"
+    //% blockHidden=true
+    //% shim=images::createImage
+    //% imageLiteral=1
+    //% imageLiteralColumns=8
+    //% imageLiteralRows=8
+    export function headled_image_literal(data: string): string {
+        return data;
+    }
+
+    function encodeHeadLedImage(data: Image): number[] {
+        // If the physical head LED row/bit order is reversed, adjust the packing here only.
+        let encoded = [0, 0, 0, 0, 0, 0, 0, 0];
+        for (let y = 0; y < 8; y++) {
+            let row = 0;
+            for (let x = 0; x < 8; x++) {
+                if (data.pixel(x, y))
+                    row |= 0x80 >> x;
+            }
+            encoded[y] = row;
+        }
+        return encoded;
+    }
+
+
+    //% block="로보독 자세를 $action (으)로 취하기"
+    //% group="동작"
+    //% weight=100
+    export function gesture(action: Deflib.posture): void {
+        check_modeChange(0, 4);
+        txData[16] = Deflib.constrain(action, 0, 4)
+    }
+
+
+    //% block="로보독 $legs 보행높이를 $height(으)로 설정하기"
+    //% leg.defl=Deflib.whatlegs.all_legs height.defl=60
+    //% group="동작"
+    //% weight=99
+    export function leg_bend(legs: Deflib.whatlegs, height: number): void {
+        check_modeChange(0, 1);
+        height = Deflib.constrain(height, 20, 90);
+        if (legs == 0)
+            txData[16] = txData[17] = txData[18] = txData[19] = height;
+        if (legs == 1)
+            txData[16] = txData[19] = height;
+        if (legs == 2)
+            txData[17] = txData[18] = height;
+        if (legs == 3)
+            txData[16] = txData[17] = height;
+        if (legs == 4)
+            txData[18] = txData[19] = height;
+    }
+
+
+    //% block="로보독 $leg (을)를 다리높이 $height, 발끝앞뒤 $fb(으)로 설정하기"
+    //% height.defl=60
+    //% group="동작"
+    //% weight=98
+    export function leg(leg: Deflib.legs, height: number, fb: number): void {
+        check_modeChange(-127, 2);
+        height = Deflib.constrain(height, 20, 90);
+        fb = Deflib.constrain(fb, -90, 90);
+
+        let _pos = legPos[leg];
+        for (let n = 0; n < 4; n++) {
+            if (_pos[n] == 1) {
+                txData[16 + n * 2] = height;
+                txData[16 + n * 2 + 1] = fb;
+            }
+        }
+    }
+
+
+    //% block="로보독 $leg (을)를 어깨 $deg1도, 무릎 $deg2도(으)로 설정하기""
+    //% group="동작"
+    //% weight=97
+    export function motor(leg: Deflib.legs, deg1: number, deg2: number): void {
+        check_modeChange(-127, 3);
+
+        deg1 = Deflib.constrain(deg1, -90, 90);
+        deg2 = Deflib.constrain(deg2, -90, 90);
+
+        let _pos = legPos[leg];
+        for (let n = 0; n < 4; n++) {
+            if (_pos[n] == 1) {
+                txData[16 + n * 2] = deg1;
+                txData[16 + n * 2 + 1] = deg2;
+            }
+        }
+    }
+
+
+    //% block="로보독을 $dir (으)로 $velocity 빠르기로 이동하기"
+    //% velocity.defl=50
+    //% group="동작"
+    //% weight=96
+    export function move(dir: Deflib.front_back, velocity: number): void {
+        check_modeChange(0, 1);
+        velocity = Deflib.constrain(velocity, -100, 100);
+        txData[20] = (dir == Deflib.front_back.front) ? velocity : -1 * velocity;
+    }
+
+
+    //% block="로보독을 $dir (으)로 $deg 도 만큼 $velocity 빠르기로 회전하기"
+    //% deg.min=0 deg.max=360 deg.defl=90
+    //% velocity.min=10 velocity.max=100 velocity.defl=100
+    //% group="동작"
+    //% weight=95
+    export function rotation(dir: Deflib.rotate_dir, deg: number, velocity: number): void {
+        let target = planRelativeRotationTarget(dir, deg);
+        executeRotationTarget(target, velocity, rotationWaitRelative);
+    }
+
+
+    //% block="로보독을 시작방향으로 되돌리기"
+    //% angle.min=0 angle.max=360 angle.defl=0
+    //% velocity.min=10 velocity.max=100 velocity.defl=100
+    //% group="동작"
+    //% weight=94
+    export function rotation_absolute(angle: number = 0, velocity: number = 100): void {
+        let target = planAbsoluteRotationTarget(angle);
+        executeRotationTarget(target, velocity, rotationWaitAbsolute);
+    }
+
+
+    //% block="로보독 헤드LED에 $exp 표정 표현하기"
+    //% group="LED"
+    //% weight=89
+    export function headled_exp(exp: Deflib.led_draw): void {
+        txData[14] = (txData[14] & 0xC0) | 0x82;
+        txData[24] = exp;
+        ledData[0] = txData[14];
+        ledData[1] = ledData[1] | 0x80;
+        for (let n = 0; n < 16; n++)
+            ledData[n + 2] = txData[n + 24];
+    }
+
+
+    //% block="로보독 $what 헤드LED에 문자 $character 표현하기"
+    //% character.defl="A"
+    //% group="LED"
+    //% weight=88
+    export function headled_print(what: Deflib.left_right, character: string): void {
+        txData[14] = (txData[14] & 0xC0) | 0x83;
+        let aa = character.charCodeAt(0);
+        let offsets = getHeadLedOffsets(what);
+        for (let offset of offsets)
+            txData[24 + offset] = aa;
+        ledData[0] = txData[14];
+        ledData[1] = ledData[1] | 0x80;
+        for (let n = 0; n < 16; n++)
+            ledData[n + 2] = txData[n + 24];
+    }
+
+
+    //% blockId=robodog_headled_draw_matrix
+    //% block="로보독 $what 헤드LED에 표현하기|$data"
+    //% inlineInputMode=external
+    //% data.shadow=robodog_headled_image_literal_v2
+    //% group="LED"
+    //% weight=87
+    export function headled_draw(what: Deflib.left_right, data: string): void {
+        txData[14] = (txData[14] & 0xC0) | 0x81;
+        let image = <Image><any>data;
+        let encoded = encodeHeadLedImage(image);
+        let offsets = getHeadLedOffsets(what);
+        for (let offset of offsets) {
+            for (let n = 0; n < 8; n++)
+                txData[24 + offset + n] = encoded[n];
+        }
+        ledData[0] = txData[14];
+        ledData[1] = ledData[1] | 0x80;
+        for (let n = 0; n < 16; n++)
+            ledData[n + 2] = txData[n + 24];
+    }
+
+
+    //% block="로보독 바디LED를 R:$r, G:$g, B:$b로 색상 출력하기"
+    //%r.defl=255 g.defl=255 b.defl=255
+    //% group="LED"
+    //% weight=85
+    export function bodyled(r: number, g: number, b: number): void {
+        txData[24] = Deflib.constrain(r, 0, 255);
+        txData[25] = Deflib.constrain(g, 0, 255);
+        txData[26] = Deflib.constrain(b, 0, 255);
+
+        txData[28] = txData[32] = txData[36] = txData[24];
+        txData[29] = txData[33] = txData[37] = txData[25];
+        txData[30] = txData[34] = txData[38] = txData[26];
+        txData[14] = (txData[14] & 0xC0) | 0x44;
+        ledData[1] = txData[14];
+        ledData[0] = ledData[0] | 0x40;
+        for (let n = 0; n < 16; n++)
+            ledData[n + 18] = txData[n + 24];
+    }
+
+
+    //% block="효과음 $what (을)를 $volume 소리내기"
+    //% group="소리"
+    //% weight=79
+    export function sound_play(what: Deflib.mp3_list, volume: Deflib.mp3_volume): void {
+        let id = (txData[7] & 0x80) == 0x80 ? 0x00 : 0x80;
+        txData[7] = what | id;
+        txData[8] = volume;
+    }
+
+
+    //% block="버튼"
+    //% group="센서"
+    //% weight=59
+    export function get_button(): number {
+        return button;
+    }
+
+
+    //% block="배터리"
+    //% group="센서"
+    //% weight=58
+    export function get_battery(): number {
+        return battery;
+    }
+
+
+    //% block="거리센서"
+    //% group="센서"
+    //% weight=57
+    export function get_tof(): number {
+        return tof;
+    }
+
+
+    //% block="기울기를 $what(으)로 읽기"
+    //% group="센서"
+    //% weight=56
+    export function get_tilt(what: Deflib.lr_fb): number {
+        return what == Deflib.lr_fb.lr ? roll : pitch;
+    }
+
+
+    //% block="회전"
+    //% group="센서"
+    //% weight=55
+    export function get_rotation(): number {
+        return yaw;
+    }
+}
