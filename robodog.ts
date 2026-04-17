@@ -1,9 +1,9 @@
 /**
-* Control RoboDog 
+* Control Robodog
 */
 let legPos: number[][] = [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1], [1, 0, 0, 1], [0, 1, 1, 0], [1, 1, 0, 0], [0, 0, 1, 1], [1, 1, 1, 1]];
-//% groups='["동작", "LED", "소리", "센서"]'
-//% block="로보독" weight=80 color=#376db5 icon="\uf1b0"
+//% groups='["Motion", "LED", "Sound", "Sensors"]'
+//% block="Robodog" weight=80 color=#376db5 icon="\uf1b0"
 namespace robodog {
     let isInit = 0;
     let battery = 0;
@@ -297,8 +297,8 @@ namespace robodog {
     }
 
 
-    //% block="로보독 자세를 $action (으)로 취하기"
-    //% group="동작"
+    //% block="take $action posture with Robodog"
+    //% group="Motion"
     //% weight=100
     export function gesture(action: Deflib.posture): void {
         check_modeChange(0, 4);
@@ -306,9 +306,9 @@ namespace robodog {
     }
 
 
-    //% block="로보독 $legs 보행높이를 $height(으)로 설정하기"
+    //% block="set Robodog $legs walking height to $height"
     //% leg.defl=Deflib.whatlegs.all_legs height.defl=60
-    //% group="동작"
+    //% group="Motion"
     //% weight=99
     export function leg_bend(legs: Deflib.whatlegs, height: number): void {
         check_modeChange(0, 1);
@@ -326,9 +326,9 @@ namespace robodog {
     }
 
 
-    //% block="로보독 $leg (을)를 다리높이 $height, 발끝앞뒤 $fb(으)로 설정하기"
+    //% block="set Robodog $leg leg height to $height and foot forward/backward to $fb"
     //% height.defl=60
-    //% group="동작"
+    //% group="Motion"
     //% weight=98
     export function leg(leg: Deflib.legs, height: number, fb: number): void {
         check_modeChange(-127, 2);
@@ -345,8 +345,8 @@ namespace robodog {
     }
 
 
-    //% block="로보독 $leg (을)를 어깨 $deg1도, 무릎 $deg2도(으)로 설정하기""
-    //% group="동작"
+    //% block="set Robodog $leg shoulder to $deg1 degrees and knee to $deg2 degrees"
+    //% group="Motion"
     //% weight=97
     export function motor(leg: Deflib.legs, deg1: number, deg2: number): void {
         check_modeChange(-127, 3);
@@ -364,9 +364,9 @@ namespace robodog {
     }
 
 
-    //% block="로보독을 $dir (으)로 $velocity 빠르기로 이동하기"
+    //% block="move Robodog $dir at speed $velocity"
     //% velocity.defl=50
-    //% group="동작"
+    //% group="Motion"
     //% weight=96
     export function move(dir: Deflib.front_back, velocity: number): void {
         check_modeChange(0, 1);
@@ -375,10 +375,10 @@ namespace robodog {
     }
 
 
-    //% block="로보독을 $dir (으)로 $deg 도 만큼 $velocity 빠르기로 회전하기"
+    //% block="turn Robodog $dir by $deg degrees at speed $velocity"
     //% deg.min=0 deg.max=360 deg.defl=90
     //% velocity.min=10 velocity.max=100 velocity.defl=100
-    //% group="동작"
+    //% group="Motion"
     //% weight=95
     export function rotation(dir: Deflib.rotate_dir, deg: number, velocity: number): void {
         let target = planRelativeRotationTarget(dir, deg);
@@ -386,10 +386,10 @@ namespace robodog {
     }
 
 
-    //% block="로보독을 시작방향으로 되돌리기"
+    //% block="return Robodog to start direction"
     //% angle.min=0 angle.max=360 angle.defl=0
     //% velocity.min=10 velocity.max=100 velocity.defl=100
-    //% group="동작"
+    //% group="Motion"
     //% weight=94
     export function rotation_absolute(angle: number = 0, velocity: number = 100): void {
         let target = planAbsoluteRotationTarget(angle);
@@ -397,7 +397,7 @@ namespace robodog {
     }
 
 
-    //% block="로보독 헤드LED에 $exp 표정 표현하기"
+    //% block="show $exp expression on Robodog head LED"
     //% group="LED"
     //% weight=89
     export function headled_exp(exp: Deflib.led_draw): void {
@@ -410,7 +410,7 @@ namespace robodog {
     }
 
 
-    //% block="로보독 $what 헤드LED에 문자 $character 표현하기"
+    //% block="show character $character on Robodog $what head LED"
     //% character.defl="A"
     //% group="LED"
     //% weight=88
@@ -428,7 +428,7 @@ namespace robodog {
 
 
     //% blockId=robodog_headled_draw_matrix
-    //% block="로보독 $what 헤드LED에 표현하기|$data"
+    //% block="show on Robodog $what head LED|$data"
     //% inlineInputMode=external
     //% data.shadow=robodog_headled_image_literal_v2
     //% group="LED"
@@ -449,7 +449,7 @@ namespace robodog {
     }
 
 
-    //% block="로보독 바디LED를 R:$r, G:$g, B:$b로 색상 출력하기"
+    //% block="set Robodog body LED color to R:$r, G:$g, B:$b"
     //%r.defl=255 g.defl=255 b.defl=255
     //% group="LED"
     //% weight=85
@@ -469,8 +469,8 @@ namespace robodog {
     }
 
 
-    //% block="효과음 $what (을)를 $volume 소리내기"
-    //% group="소리"
+    //% block="play sound effect $what at $volume volume"
+    //% group="Sound"
     //% weight=79
     export function sound_play(what: Deflib.mp3_list, volume: Deflib.mp3_volume): void {
         let id = (txData[7] & 0x80) == 0x80 ? 0x00 : 0x80;
@@ -479,40 +479,40 @@ namespace robodog {
     }
 
 
-    //% block="버튼"
-    //% group="센서"
+    //% block="button"
+    //% group="Sensors"
     //% weight=59
     export function get_button(): number {
         return button;
     }
 
 
-    //% block="배터리"
-    //% group="센서"
+    //% block="battery"
+    //% group="Sensors"
     //% weight=58
     export function get_battery(): number {
         return battery;
     }
 
 
-    //% block="거리센서"
-    //% group="센서"
+    //% block="distance sensor"
+    //% group="Sensors"
     //% weight=57
     export function get_tof(): number {
         return tof;
     }
 
 
-    //% block="기울기를 $what(으)로 읽기"
-    //% group="센서"
+    //% block="read tilt as $what"
+    //% group="Sensors"
     //% weight=56
     export function get_tilt(what: Deflib.lr_fb): number {
         return what == Deflib.lr_fb.lr ? roll : pitch;
     }
 
 
-    //% block="회전"
-    //% group="센서"
+    //% block="rotation"
+    //% group="Sensors"
     //% weight=55
     export function get_rotation(): number {
         return yaw;

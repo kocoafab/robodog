@@ -11,7 +11,9 @@
         "main.ts",
         "README.md",
         "robodog.ts",
-        "deflib.ts"
+        "deflib.ts",
+        "_locales/ko/robodog-strings.json",
+        "_locales/en/robodog-strings.json"
     ],
     "testFiles": [
         "test.ts"

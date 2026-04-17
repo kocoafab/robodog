@@ -1,24 +1,84 @@
+# 로보독 빅아이(Robodog Bigeye)
 
-> 이 페이지를 [https://kocoafab.github.io/robodog/](https://kocoafab.github.io/robodog/)으로 열기
+로보독 빅아이는 4족 보행 시스템과 AI 학습 기능을 갖춘 교육용 로봇입니다.
+메이크코드 확장 프로그램으로 로보독의 기능을 쉽게 제어할 수 있습니다.
+* **이동 및 회전:** 전후 이동 및 좌우 회전
+* **다리 각도 제어:** 개별 다리 관절을 정밀하게 제어
+* **센서값 제어:** 내장된 LED 및 기타 센서값 제어
 
-## 확장으로 사용
+Robodog Bigeye is an educational robot equipped with a quadruped walking system and AI learning capabilities. 
 
-이 저장소는 MakeCode에서 **확장**으로 추가될 수 있습니다.
+With the dedicated **MakeCode extension**, you can easily control various functions, including:
+* **Movement & Rotation:** Full control over walking directions and turns.
+* **Leg Angle Control:** Precise adjustment of individual leg joints.
+* **Hardware Interfacing:** Control built-in LEDs and other interactive components.
 
-* [https://makecode.microbit.org/](https://makecode.microbit.org/) 열기
-* **새로운 프로젝트**에서 클릭
-* 톱니바퀴 모양 메뉴에서 **확장**을 클릭합니다
-* **https://github.com/kocoafab/robodog**으로 검색하고 가져오기
+## ~ hint
+아래 링크를 통해 로보독 빅아이 제품 정보를 볼 수 있습니다.
 
-## 이 프로젝트 편집
+You can find more information about Robodog Bigeye through the link below.
 
-MakeCode에서 이 저장소를 편집합니다.
+→ [로보독 빅아이 제품 살펴보기](https://www.kocoafab.cc/product/robodog)
 
-* [https://makecode.microbit.org/](https://makecode.microbit.org/) 열기
-* **가져오기**를 클릭한 다음 **가져오기 URL**를 클릭합니다
-* **https://github.com/kocoafab/robodog**를 붙여넣고 가져오기를 클릭하세요.
 
-#### 메타데이터(검색, 렌더링에 사용)
+## 기본 사용법(Basic usage)
+
+```typescript
+robodog.gesture(Deflib.posture.ready)
+robodog.leg_bend(Deflib.whatlegs.all_legs, 60)
+robodog.move(Deflib.front_back.front, 50)
+basic.pause(1000)
+robodog.move(Deflib.front_back.front, 0)
+```
+
+* ``Robodog:Motion`` 블록을 사용해 로보독의 자세, 다리 높이, 이동 방향과 속도를 제어합니다.
+* Use ``Robodog:Motion`` blocks to control the posture, leg height, movement direction, and speed.
+
+```typescript
+robodog.rotation(Deflib.rotate_dir.cw, 90, 80)
+robodog.rotation_absolute(0, 100)
+```
+
+* ``Robodog:turn`` 블록은 현재 방향 기준으로 회전하고, ``Robodog:return`` 블록은 시작 방향으로 되돌립니다.
+* The turn block rotates Robodog from the current direction, and the return block turns it back to the start direction.
+
+```typescript
+robodog.headled_exp(Deflib.led_draw.zero)
+robodog.headled_print(Deflib.left_right.both, "A")
+robodog.bodyled(0, 128, 255)
+robodog.sound_play(Deflib.mp3_list._1, Deflib.mp3_volume.middle)
+```
+
+* ``Robodog:LED`` 블록으로 헤드 LED 표정, 문자, 바디 LED 색상을 출력하고 ``Robodog:Sound`` 블록으로 효과음을 재생합니다.
+* Use ``Robodog:LED`` blocks for head LED expressions, characters, and body LED colors, and use ``Robodog:Sound`` blocks to play sound effects.
+
+```typescript
+basic.forever(function () {
+    serial.writeValue("battery", robodog.get_battery())
+    serial.writeValue("distance", robodog.get_tof())
+    serial.writeValue("tilt", robodog.get_tilt(Deflib.lr_fb.fb))
+    serial.writeValue("rotation", robodog.get_rotation())
+    basic.pause(1000)
+})
+```
+
+* ``Robodog:Sensors`` 블록으로 버튼, 배터리, 거리센서, 기울기, 회전 값을 읽을 수 있습니다.
+* Use ``Robodog:Sensors`` blocks to read button, battery, distance sensor, tilt, and rotation values.
+
+## 지원제품(Supported targets)
 
 * for PXT/microbit
-<script src="https://makecode.com/gh-pages-embed.js"></script><script>makeCodeRender("{{ site.makecode.home_url }}", "{{ site.github.owner_name }}/{{ site.github.repository_name }}");</script>
+
+## 라이선스(License)
+
+MIT
+
+## 제품 문의(Product inquiries)
+
+제품에 관한 문의는 ``02-3470-2829`` 또는 [contact@kocoa.or.kr](mailto:contact@kocoa.or.kr)를 통해 문의 부탁드립니다.
+
+For product inquiries, please contact ``02-3470-2829`` or [contact@kocoa.or.kr](mailto:contact@kocoa.or.kr).
+
+코코아팹 공식 스토어 바로가기 → [코코아팹 스마트 스토어](https://smartstore.naver.com/kocoafab)
+
+Go to the official store of kocoafab.

@@ -1,159 +1,159 @@
 
 namespace Deflib {
     export enum posture {
-        //% block="준비"
+        //% block="ready"
         ready,
-        //% block="앉기"
+        //% block="sit"
         sitdown,
-        //% block="물구나무서기"
+        //% block="handstand"
         handstand,
-        //% block="기지개켜기"
+        //% block="stretch"
         stretch,
-        //% block="인사하기"
+        //% block="say hello"
         sayhello
     }
 
     export enum whatlegs {
-        //% block="모든 다리"
+        //% block="all legs"
         all_legs = 0,
-        //% block="앞다리 모두"
+        //% block="front legs"
         front_legs = 1,
-        //% block="뒷다리 모두"
+        //% block="rear legs"
         back_legs = 2,
-        //% block="왼쪽다리 모두"
+        //% block="left legs"
         left_legs = 3,
-        //% block="오른쪽다리 모두"
+        //% block="right legs"
         right_legs = 4
     }
 
     export enum legs {
-        //% block="왼쪽 앞다리"
+        //% block="left front leg"
         left_front = 0,
-        //% block="왼쪽 뒷다리"
+        //% block="left rear leg"
         left_back = 1,
-        //% block="오른쪽 뒷다리"
+        //% block="right rear leg"
         right_back = 2,
-        //% block="오른쪽 앞다리"
+        //% block="right front leg"
         right_front = 3,
-        //% block="앞다리 모두"
+        //% block="front legs"
         front_legs = 4,
-        //% block="뒷다리 모두"
+        //% block="rear legs"
         back_legs = 5,
-        //% block="왼쪽다리 모두"
+        //% block="left legs"
         left_legs = 6,
-        //% block="오른쪽다리 모두"
+        //% block="right legs"
         right_legs = 7,
-        //% block="모든 다리"
+        //% block="all legs"
         all_legs = 8
     }
 
     export enum rotate_dir {
-        //% block="시계방향"
+        //% block="clockwise"
         cw = 0,
-        //% block="반시계방향"
+        //% block="counterclockwise"
         ccw = 1
     }
 
     export enum front_back {
-        //% block="앞"
+        //% block="forward"
         front = 0,
-        //% block="뒤"
+        //% block="backward"
         back = 1
     }
 
     export enum left_right {
-        //% block="왼쪽"
+        //% block="left"
         left = 0,
-        //% block="오른쪽"
+        //% block="right"
         right = 1,
-        //% block="양쪽"
+        //% block="both"
         both = 2
     }
 
     export enum lr_fb {
-        //% block="좌우"
+        //% block="left/right"
         lr = 0,
-        //% block="앞뒤"
+        //% block="forward/backward"
         fb = 1
     }
 
     export enum led_draw {
-        //% block="초롱초롱"
+        //% block="sparkling eyes"
         zero,
-        //% block="ILOVEYOU"
+        //% block="I LOVE YOU"
         one,
-        //% block="눈감기"
+        //% block="eyes closed"
         two,
-        //% block="감사"
+        //% block="thanks"
         three,
-        //% block="고마워요"
+        //% block="thank you"
         four,
-        //% block="뱁새"
+        //% block="sparrow"
         five,
-        //% block="좌우굴리기"
+        //% block="rolling eyes"
         six,
-        //% block="찢눈"
+        //% block="sharp eyes"
         seven,
-        //% block="찢눈 깜박임"
+        //% block="blinking sharp eyes"
         eight,
-        //% block="곤충"
+        //% block="insect"
         nine,
-        //% block="깜박"
+        //% block="blink"
         ten,
-        //% block="뱀눈"
+        //% block="snake eyes"
         eleven,
-        //% block="바람개비"
+        //% block="pinwheel"
         twelve,
-        //% block="왕눈이"
+        //% block="big eyes"
         thirteen
     }
 
     export enum mp3_list {
-        //% block="멍멍"
+        //% block="bark"
         _1 = 1,
-        //% block="으르렁"
+        //% block="growl"
         _2 = 2,
-        //% block="화난"
+        //% block="angry"
         _3 = 3,
-        //% block="찡찡"
+        //% block="whine"
         _4 = 4,
-        //% block="거친숨"
+        //% block="heavy breath"
         _5 = 5,
-        //% block="안녕"
+        //% block="hello"
         _11 = 11,
-        //% block="기다려"
+        //% block="wait"
         _12 = 12,
-        //% block="비켜"
+        //% block="move aside"
         _13 = 13,
-        //% block="출발"
+        //% block="start"
         _14 = 14,
-        //% block="레이저"
+        //% block="laser"
         _21 = 21,
-        //% block="모터회전"
+        //% block="motor rotation"
         _22 = 22,
-        //% block="띠리리"
+        //% block="ding-ding"
         _23 = 23,
-        //% block="외계신호"
+        //% block="alien signal"
         _24 = 24,
-        //% block="동작"
+        //% block="motion"
         _25 = 25,
-        //% block="충돌"
+        //% block="collision"
         _26 = 26,
-        //% block="도"
+        //% block="do"
         _31 = 31,
-        //% block="레"
+        //% block="re"
         _32 = 32,
-        //% block="미"
+        //% block="mi"
         _33 = 33,
-        //% block="파"
+        //% block="fa"
         _34 = 34,
-        //% block="솔"
+        //% block="sol"
         _35 = 35,
-        //% block="라"
+        //% block="la"
         _36 = 36,
-        //% block="시"
+        //% block="si"
         _37 = 37,
-        //% block="#도"
+        //% block="#do"
         _38 = 38,
         //% block="user def1"
         _41 = 41,
@@ -168,11 +168,11 @@ namespace Deflib {
     }
 
     export enum mp3_volume {
-        //% block="크게"
+        //% block="loud"
         big = 3,
-        //% block="중간으로"
+        //% block="medium"
         middle = 2,
-        //% block="작게"
+        //% block="quiet"
         small = 1
     }
 
