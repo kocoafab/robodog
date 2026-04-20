@@ -285,8 +285,6 @@ namespace robodog {
     radio.onReceivedBuffer(function (receivedBuffer) {
         if (!isRadioMode())
             return;
-        if (receivedBuffer.length < 10)
-            return;
         if (checksum2(receivedBuffer) != receivedBuffer[1])
             return;
 
@@ -295,6 +293,8 @@ namespace robodog {
             return;
         }
 
+        if (receivedBuffer.length < 10)
+            return;
         updateRadioSensorState(receivedBuffer);
         cameraAlive = receivedBuffer[9];
         for (let p = 0; p < 9 && (10 + p) < receivedBuffer.length; p++)
