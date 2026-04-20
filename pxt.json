@@ -13,7 +13,8 @@
         "robodog.ts",
         "deflib.ts",
         "_locales/ko/robodog-strings.json",
-        "_locales/en/robodog-strings.json"
+        "_locales/en/robodog-strings.json",
+        "tutorial-info-cache.json"
     ],
     "testFiles": [
         "test.ts"
