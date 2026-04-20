@@ -90,6 +90,20 @@ namespace robodog {
         }
     }
 
+    function clearHeadLedPayload(): void {
+        for (let n = 0; n < 16; n++) {
+            txData[24 + n] = 0;
+            ledData[n + 2] = 0;
+        }
+    }
+
+    function stageHeadLedPayload(): void {
+        ledData[0] = txData[14];
+        ledData[1] = ledData[1] | 0x80;
+        for (let n = 0; n < 16; n++)
+            ledData[n + 2] = txData[n + 24];
+    }
+
     function serviceUartTx(): void {
         consumeSerialRx();
         updateAlternatingLedPayload();
@@ -221,21 +235,37 @@ namespace robodog {
         }
     }
 
+    function updateYawState(nextYaw: number): void {
+        yaw = nextYaw;
+        if (!hasYawSample)
+            controlYaw = yaw
+        else
+            controlYaw += wrapYawDelta(yaw, lastRawYaw);
+        lastRawYaw = yaw;
+        hasYawSample = true;
+    }
+
+    function updateUartSensorState(packet: Buffer): void {
+        battery = packet[6]
+        tof = packet[7]
+        roll = deflib.toSigned8(packet[8])
+        pitch = deflib.toSigned8(packet[9])
+        updateYawState(deflib.toSigned16((packet[11] << 8) | packet[10]))
+        buttonPressed = (packet[12] & 0x01) == 1
+    }
+
+    function updateRadioSensorState(receivedBuffer: Buffer): void {
+        battery = receivedBuffer[2]
+        tof = receivedBuffer[3]
+        roll = deflib.toSigned8(receivedBuffer[4])
+        pitch = deflib.toSigned8(receivedBuffer[5])
+        updateYawState(deflib.toSigned16((receivedBuffer[7] << 8) | receivedBuffer[6]))
+        buttonPressed = (receivedBuffer[8] & 0x0F) != 0
+    }
+
     function handleRxPacket(packet: Buffer): void {
-        if (packet.length > 19) {
-            battery = packet[6]
-            tof = packet[7]
-            roll = deflib.toSigned8(packet[8])
-            pitch = deflib.toSigned8(packet[9])
-            yaw = deflib.toSigned16((packet[11] << 8) | packet[10])
-            if (!hasYawSample)
-                controlYaw = yaw
-            else
-                controlYaw += wrapYawDelta(yaw, lastRawYaw);
-            lastRawYaw = yaw;
-            hasYawSample = true;
-            buttonPressed = (packet[12] & 0x01) == 1
-        }
+        if (packet.length > 19)
+            updateUartSensorState(packet);
     }
 
 
@@ -252,18 +282,7 @@ namespace robodog {
             return;
         }
 
-        battery = receivedBuffer[2]
-        tof = receivedBuffer[3]
-        roll = deflib.toSigned8(receivedBuffer[4])
-        pitch = deflib.toSigned8(receivedBuffer[5])
-        yaw = deflib.toSigned16((receivedBuffer[7] << 8) | receivedBuffer[6])
-        if (!hasYawSample)
-            controlYaw = yaw
-        else
-            controlYaw += wrapYawDelta(yaw, lastRawYaw);
-        lastRawYaw = yaw;
-        hasYawSample = true;
-        buttonPressed = (receivedBuffer[8] & 0x0F) != 0
+        updateRadioSensorState(receivedBuffer);
         cameraAlive = receivedBuffer[9];
         for (let p = 0; p < 9 && (10 + p) < receivedBuffer.length; p++)
             aiData[p] = receivedBuffer[10 + p];
@@ -546,11 +565,9 @@ namespace robodog {
     export function headLedExp(exp: deflib.LedExpression, mode?: deflib.RobodogMode): void {
         useMode(mode);
         txData[14] = (txData[14] & 0xC0) | 0x82;
+        clearHeadLedPayload();
         txData[24] = exp;
-        ledData[0] = txData[14];
-        ledData[1] = ledData[1] | 0x80;
-        for (let n = 0; n < 16; n++)
-            ledData[n + 2] = txData[n + 24];
+        stageHeadLedPayload();
     }
 
 
@@ -562,14 +579,12 @@ namespace robodog {
     export function headLedPrint(what: deflib.HeadLedSide, character: string, mode?: deflib.RobodogMode): void {
         useMode(mode);
         txData[14] = (txData[14] & 0xC0) | 0x83;
+        clearHeadLedPayload();
         let aa = character.charCodeAt(0);
         let offsets = getHeadLedOffsets(what);
         for (let offset of offsets)
             txData[24 + offset] = aa;
-        ledData[0] = txData[14];
-        ledData[1] = ledData[1] | 0x80;
-        for (let n = 0; n < 16; n++)
-            ledData[n + 2] = txData[n + 24];
+        stageHeadLedPayload();
     }
 
 
@@ -582,6 +597,7 @@ namespace robodog {
     export function headLedDraw(what: deflib.HeadLedSide, data: string, mode?: deflib.RobodogMode): void {
         useMode(mode);
         txData[14] = (txData[14] & 0xC0) | 0x81;
+        clearHeadLedPayload();
         let image = <Image><any>data;
         let encoded = encodeHeadLedImage(image);
         let offsets = getHeadLedOffsets(what);
@@ -589,10 +605,7 @@ namespace robodog {
             for (let n = 0; n < 8; n++)
                 txData[24 + offset + n] = encoded[n];
         }
-        ledData[0] = txData[14];
-        ledData[1] = ledData[1] | 0x80;
-        for (let n = 0; n < 16; n++)
-            ledData[n + 2] = txData[n + 24];
+        stageHeadLedPayload();
     }
 
 
