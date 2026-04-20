@@ -31,6 +31,7 @@ namespace robodog {
     let strData = pins.createBuffer(10);
     export let counter = 0;
     let radioInit = false;
+    let radioBand = 7;
     let radioTxIndex = 0;
     let isExtPacketEnabled = false;
     let rotationWaitRelative = false;
@@ -112,10 +113,16 @@ namespace robodog {
         timerCnt += 1;
     }
 
-    function serviceRadioTx(): void {
-        if (!radioInit)
+    function ensureRadioInitialized(): void {
+        if (radioInit)
             return;
+        radio.setGroup(14)
+        radio.setFrequencyBand(radioBand);
+        radioInit = true;
+    }
 
+    function serviceRadioTx(): void {
+        ensureRadioInitialized();
         if (isExtPacketEnabled) {
             extTxData[5] = checksum(extTxData);
             radio.sendBuffer(extTxData);
@@ -439,10 +446,8 @@ namespace robodog {
             return;
         if (radioInit)
             return;
-        band = deflib.constrain(band, 0, 79);
-        radio.setGroup(14)
-        radio.setFrequencyBand(band);
-        radioInit = true;
+        radioBand = deflib.constrain(band, 0, 79);
+        ensureRadioInitialized();
     }
 
 
@@ -679,7 +684,7 @@ namespace robodog {
 
 
     //% blockId=robodog_get_battery
-    //% block="battery (%)"
+    //% block="battery (\\%)"
     //% group="Sensors"
     //% weight=58
     export function getBattery(mode?: deflib.RobodogMode): number {
