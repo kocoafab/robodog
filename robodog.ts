@@ -16,7 +16,7 @@ namespace robodog {
     let roll = 0;
     let pitch = 0;
     let buttonPressed = false;
-    let cameraAlive = 0;
+    let cameraAlive = false;
     let aiData = pins.createBuffer(10);
     let timerCnt = 0;
     let txData = pins.createBuffer(48);
@@ -273,6 +273,7 @@ namespace robodog {
         pitch = deflib.toSigned8(receivedBuffer[5])
         updateYawState(deflib.toSigned16((receivedBuffer[7] << 8) | receivedBuffer[6]))
         buttonPressed = (receivedBuffer[8] & 0x0F) != 0
+        cameraAlive = receivedBuffer[9] != 0
     }
 
     function handleRxPacket(packet: Buffer): void {
@@ -295,7 +296,6 @@ namespace robodog {
         if (receivedBuffer.length < 10)
             return;
         updateRadioSensorState(receivedBuffer);
-        cameraAlive = receivedBuffer[9];
         for (let p = 0; p < 10 && (10 + p) < receivedBuffer.length; p++)
             aiData[p] = receivedBuffer[10 + p];
     })
@@ -709,7 +709,7 @@ namespace robodog {
     //% block="AI camera ready"
     //% group="AI Data"
     //% weight=49
-    export function getCameraAlive(): number {
+    export function getCameraAlive(): boolean {
         return cameraAlive;
     }
 

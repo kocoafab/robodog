@@ -91,7 +91,7 @@ robodog.aiDetection(deflib.AiMode.FaceDetect)
 robodog.faceTracking(deflib.AiClass.Class1)
 
 basic.forever(function () {
-    serial.writeValue("camera", robodog.getCameraAlive())
+    serial.writeLine("camera: " + (robodog.getCameraAlive() ? "true" : "false"))
     serial.writeValue("face", robodog.getFaceClass())
     basic.pause(1000)
 })

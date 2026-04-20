@@ -55,7 +55,7 @@
   "robodog.getCameraAlive|group": "AI Data",
   "robodog.getFaceClass|block": "face detection class",
   "robodog.getFaceClass|group": "AI Data",
-  "robodog.getFaceTracking|block": "face tracking",
+  "robodog.getFaceTracking|block": "face tracking class",
   "robodog.getFaceTracking|group": "AI Data",
   "robodog.getColorDetect|block": "color detection class",
   "robodog.getColorDetect|group": "AI Data",

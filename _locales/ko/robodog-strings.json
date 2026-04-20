@@ -55,7 +55,7 @@
   "robodog.getCameraAlive|group": "AI 데이터",
   "robodog.getFaceClass|block": "얼굴인식 Class",
   "robodog.getFaceClass|group": "AI 데이터",
-  "robodog.getFaceTracking|block": "얼굴추적",
+  "robodog.getFaceTracking|block": "얼굴 추적 Class",
   "robodog.getFaceTracking|group": "AI 데이터",
   "robodog.getColorDetect|block": "색상인식 Class",
   "robodog.getColorDetect|group": "AI 데이터",
