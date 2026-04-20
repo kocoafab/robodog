@@ -1,179 +1,178 @@
-
-namespace Deflib {
-    export enum posture {
+namespace deflib {
+    export enum Posture {
         //% block="ready"
-        ready,
+        Ready,
         //% block="sit"
-        sitdown,
+        SitDown,
         //% block="handstand"
-        handstand,
+        Handstand,
         //% block="stretch"
-        stretch,
+        Stretch,
         //% block="say hello"
-        sayhello
+        SayHello
     }
 
-    export enum whatlegs {
+    export enum LegGroup {
         //% block="all legs"
-        all_legs = 0,
+        AllLegs = 0,
         //% block="front legs"
-        front_legs = 1,
+        FrontLegs = 1,
         //% block="rear legs"
-        back_legs = 2,
+        BackLegs = 2,
         //% block="left legs"
-        left_legs = 3,
+        LeftLegs = 3,
         //% block="right legs"
-        right_legs = 4
+        RightLegs = 4
     }
 
-    export enum legs {
+    export enum LegSelection {
         //% block="left front leg"
-        left_front = 0,
+        LeftFront = 0,
         //% block="left rear leg"
-        left_back = 1,
+        LeftBack = 1,
         //% block="right rear leg"
-        right_back = 2,
+        RightBack = 2,
         //% block="right front leg"
-        right_front = 3,
+        RightFront = 3,
         //% block="front legs"
-        front_legs = 4,
+        FrontLegs = 4,
         //% block="rear legs"
-        back_legs = 5,
+        BackLegs = 5,
         //% block="left legs"
-        left_legs = 6,
+        LeftLegs = 6,
         //% block="right legs"
-        right_legs = 7,
+        RightLegs = 7,
         //% block="all legs"
-        all_legs = 8
+        AllLegs = 8
     }
 
-    export enum rotate_dir {
+    export enum RotateDirection {
         //% block="clockwise"
-        cw = 0,
+        Clockwise = 0,
         //% block="counterclockwise"
-        ccw = 1
+        Counterclockwise = 1
     }
 
-    export enum front_back {
+    export enum MoveDirection {
         //% block="forward"
-        front = 0,
+        Forward = 0,
         //% block="backward"
-        back = 1
+        Backward = 1
     }
 
-    export enum left_right {
+    export enum HeadLedSide {
         //% block="left"
-        left = 0,
+        Left = 0,
         //% block="right"
-        right = 1,
+        Right = 1,
         //% block="both"
-        both = 2
+        Both = 2
     }
 
-    export enum lr_fb {
+    export enum TiltAxis {
         //% block="left/right"
-        lr = 0,
+        LeftRight = 0,
         //% block="forward/backward"
-        fb = 1
+        ForwardBackward = 1
     }
 
-    export enum led_draw {
+    export enum LedExpression {
         //% block="sparkling eyes"
-        zero,
+        SparklingEyes,
         //% block="I LOVE YOU"
-        one,
+        ILoveYou,
         //% block="eyes closed"
-        two,
+        EyesClosed,
         //% block="thanks"
-        three,
+        Thanks,
         //% block="thank you"
-        four,
+        ThankYou,
         //% block="sparrow"
-        five,
+        Sparrow,
         //% block="rolling eyes"
-        six,
+        RollingEyes,
         //% block="sharp eyes"
-        seven,
+        SharpEyes,
         //% block="blinking sharp eyes"
-        eight,
+        BlinkingSharpEyes,
         //% block="insect"
-        nine,
+        Insect,
         //% block="blink"
-        ten,
+        Blink,
         //% block="snake eyes"
-        eleven,
+        SnakeEyes,
         //% block="pinwheel"
-        twelve,
+        Pinwheel,
         //% block="big eyes"
-        thirteen
+        BigEyes
     }
 
-    export enum mp3_list {
+    export enum SoundEffect {
         //% block="bark"
-        _1 = 1,
+        Bark = 1,
         //% block="growl"
-        _2 = 2,
+        Growl = 2,
         //% block="angry"
-        _3 = 3,
+        Angry = 3,
         //% block="whine"
-        _4 = 4,
+        Whine = 4,
         //% block="heavy breath"
-        _5 = 5,
+        HeavyBreath = 5,
         //% block="hello"
-        _11 = 11,
+        Hello = 11,
         //% block="wait"
-        _12 = 12,
+        Wait = 12,
         //% block="move aside"
-        _13 = 13,
+        MoveAside = 13,
         //% block="start"
-        _14 = 14,
+        Start = 14,
         //% block="laser"
-        _21 = 21,
+        Laser = 21,
         //% block="motor rotation"
-        _22 = 22,
+        MotorRotation = 22,
         //% block="ding-ding"
-        _23 = 23,
+        DingDing = 23,
         //% block="alien signal"
-        _24 = 24,
+        AlienSignal = 24,
         //% block="motion"
-        _25 = 25,
+        Motion = 25,
         //% block="collision"
-        _26 = 26,
+        Collision = 26,
         //% block="do"
-        _31 = 31,
+        Do = 31,
         //% block="re"
-        _32 = 32,
+        Re = 32,
         //% block="mi"
-        _33 = 33,
+        Mi = 33,
         //% block="fa"
-        _34 = 34,
+        Fa = 34,
         //% block="sol"
-        _35 = 35,
+        Sol = 35,
         //% block="la"
-        _36 = 36,
+        La = 36,
         //% block="si"
-        _37 = 37,
+        Si = 37,
         //% block="#do"
-        _38 = 38,
+        SharpDo = 38,
         //% block="user def1"
-        _41 = 41,
+        UserDef1 = 41,
         //% block="user def2"
-        _42 = 42,
+        UserDef2 = 42,
         //% block="user def3"
-        _43 = 43,
+        UserDef3 = 43,
         //% block="user def4"
-        _44 = 44,
+        UserDef4 = 44,
         //% block="user def5"
-        _45 = 45
+        UserDef5 = 45
     }
 
-    export enum mp3_volume {
+    export enum SoundVolume {
         //% block="loud"
-        big = 3,
+        Loud = 3,
         //% block="medium"
-        middle = 2,
+        Medium = 2,
         //% block="quiet"
-        small = 1
+        Quiet = 1
     }
 
 

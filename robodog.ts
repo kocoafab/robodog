@@ -14,7 +14,7 @@ namespace robodog {
     let hasYawSample = false;
     let roll = 0;
     let pitch = 0;
-    let button = 0;
+    let buttonPressed = false;
     let timerCnt = 0;
     let txData = pins.createBuffer(48);
     let rxPacketData = pins.createBuffer(100);
@@ -165,21 +165,21 @@ namespace robodog {
         if (packet.length > 19) {
             battery = packet[6]
             tof = packet[7]
-            roll = Deflib.toSigned8(packet[8])
-            pitch = Deflib.toSigned8(packet[9])
-            yaw = Deflib.toSigned16((packet[11] << 8) | packet[10])
+            roll = deflib.toSigned8(packet[8])
+            pitch = deflib.toSigned8(packet[9])
+            yaw = deflib.toSigned16((packet[11] << 8) | packet[10])
             if (!hasYawSample)
                 controlYaw = yaw
             else
                 controlYaw += wrapYawDelta(yaw, lastRawYaw);
             lastRawYaw = yaw;
             hasYawSample = true;
-            button = packet[16]
+            buttonPressed = (packet[12] & 0x01) == 1
         }
     }
 
 
-    function check_modeChange(initValue: number, mode: number): void {
+    function checkModeChange(initValue: number, mode: number): void {
         if (txData[15] != mode) {
             for (let i = 16; i < 24; i++)
                 txData[i] = initValue;
@@ -187,12 +187,12 @@ namespace robodog {
         }
     }
 
-    function getHeadLedOffsets(what: Deflib.left_right): number[] {
+    function getHeadLedOffsets(what: deflib.HeadLedSide): number[] {
         // If future hardware/docs redefine physical left/right orientation, swap offsets here only.
         switch (what) {
-            case Deflib.left_right.left:
+            case deflib.HeadLedSide.Left:
                 return [0];
-            case Deflib.left_right.right:
+            case deflib.HeadLedSide.Right:
                 return [8];
             default:
                 return [0, 8];
@@ -226,11 +226,11 @@ namespace robodog {
     }
 
     function writeRotationTarget(target: number, velocity: number): void {
-        check_modeChange(0, 1);
-        target = Deflib.constrain(Math.round(target), -32768, 32767)
+        checkModeChange(0, 1);
+        target = deflib.constrain(Math.round(target), -32768, 32767)
         txData[22] = target & 0xFF;
         txData[23] = (target >> 8) & 0xFF;
-        txData[21] = Deflib.constrain(velocity, 10, 100);
+        txData[21] = deflib.constrain(velocity, 10, 100);
     }
 
     function waitForRotationTarget(target: number): void {
@@ -258,9 +258,9 @@ namespace robodog {
             waitForRotationTarget(target)
     }
 
-    function planRelativeRotationTarget(dir: Deflib.rotate_dir, deg: number): number {
+    function planRelativeRotationTarget(dir: deflib.RotateDirection, deg: number): number {
         let angle = sanitizeRotationAngle(deg);
-        let delta = (dir == Deflib.rotate_dir.cw) ? angle : -1 * angle;
+        let delta = (dir == deflib.RotateDirection.Clockwise) ? angle : -1 * angle;
         return controlYaw + delta;
     }
 
@@ -278,7 +278,7 @@ namespace robodog {
     //% imageLiteral=1
     //% imageLiteralColumns=8
     //% imageLiteralRows=8
-    export function headled_image_literal(data: string): string {
+    export function headLedImageLiteral(data: string): string {
         return data;
     }
 
@@ -300,19 +300,20 @@ namespace robodog {
     //% block="take $action posture with Robodog"
     //% group="Motion"
     //% weight=100
-    export function gesture(action: Deflib.posture): void {
-        check_modeChange(0, 4);
-        txData[16] = Deflib.constrain(action, 0, 4)
+    export function gesture(action: deflib.Posture): void {
+        checkModeChange(0, 4);
+        txData[16] = deflib.constrain(action, 0, 4)
     }
 
 
+    //% blockId=robodog_leg_bend
     //% block="set Robodog $legs walking height to $height"
-    //% leg.defl=Deflib.whatlegs.all_legs height.defl=60
+    //% legs.defl=deflib.LegGroup.AllLegs height.defl=60
     //% group="Motion"
     //% weight=99
-    export function leg_bend(legs: Deflib.whatlegs, height: number): void {
-        check_modeChange(0, 1);
-        height = Deflib.constrain(height, 20, 90);
+    export function legBend(legs: deflib.LegGroup, height: number): void {
+        checkModeChange(0, 1);
+        height = deflib.constrain(height, 20, 90);
         if (legs == 0)
             txData[16] = txData[17] = txData[18] = txData[19] = height;
         if (legs == 1)
@@ -330,10 +331,10 @@ namespace robodog {
     //% height.defl=60
     //% group="Motion"
     //% weight=98
-    export function leg(leg: Deflib.legs, height: number, fb: number): void {
-        check_modeChange(-127, 2);
-        height = Deflib.constrain(height, 20, 90);
-        fb = Deflib.constrain(fb, -90, 90);
+    export function leg(leg: deflib.LegSelection, height: number, fb: number): void {
+        checkModeChange(-127, 2);
+        height = deflib.constrain(height, 20, 90);
+        fb = deflib.constrain(fb, -90, 90);
 
         let _pos = legPos[leg];
         for (let n = 0; n < 4; n++) {
@@ -348,11 +349,11 @@ namespace robodog {
     //% block="set Robodog $leg shoulder to $deg1 degrees and knee to $deg2 degrees"
     //% group="Motion"
     //% weight=97
-    export function motor(leg: Deflib.legs, deg1: number, deg2: number): void {
-        check_modeChange(-127, 3);
+    export function motor(leg: deflib.LegSelection, deg1: number, deg2: number): void {
+        checkModeChange(-127, 3);
 
-        deg1 = Deflib.constrain(deg1, -90, 90);
-        deg2 = Deflib.constrain(deg2, -90, 90);
+        deg1 = deflib.constrain(deg1, -90, 90);
+        deg2 = deflib.constrain(deg2, -90, 90);
 
         let _pos = legPos[leg];
         for (let n = 0; n < 4; n++) {
@@ -368,10 +369,10 @@ namespace robodog {
     //% velocity.defl=50
     //% group="Motion"
     //% weight=96
-    export function move(dir: Deflib.front_back, velocity: number): void {
-        check_modeChange(0, 1);
-        velocity = Deflib.constrain(velocity, -100, 100);
-        txData[20] = (dir == Deflib.front_back.front) ? velocity : -1 * velocity;
+    export function move(dir: deflib.MoveDirection, velocity: number): void {
+        checkModeChange(0, 1);
+        velocity = deflib.constrain(velocity, -100, 100);
+        txData[20] = (dir == deflib.MoveDirection.Forward) ? velocity : -1 * velocity;
     }
 
 
@@ -380,27 +381,29 @@ namespace robodog {
     //% velocity.min=10 velocity.max=100 velocity.defl=100
     //% group="Motion"
     //% weight=95
-    export function rotation(dir: Deflib.rotate_dir, deg: number, velocity: number): void {
+    export function rotation(dir: deflib.RotateDirection, deg: number, velocity: number): void {
         let target = planRelativeRotationTarget(dir, deg);
         executeRotationTarget(target, velocity, rotationWaitRelative);
     }
 
 
+    //% blockId=robodog_rotation_absolute
     //% block="return Robodog to start direction"
     //% angle.min=0 angle.max=360 angle.defl=0
     //% velocity.min=10 velocity.max=100 velocity.defl=100
     //% group="Motion"
     //% weight=94
-    export function rotation_absolute(angle: number = 0, velocity: number = 100): void {
+    export function rotationAbsolute(angle: number = 0, velocity: number = 100): void {
         let target = planAbsoluteRotationTarget(angle);
         executeRotationTarget(target, velocity, rotationWaitAbsolute);
     }
 
 
+    //% blockId=robodog_headled_exp
     //% block="show $exp expression on Robodog head LED"
     //% group="LED"
     //% weight=89
-    export function headled_exp(exp: Deflib.led_draw): void {
+    export function headLedExp(exp: deflib.LedExpression): void {
         txData[14] = (txData[14] & 0xC0) | 0x82;
         txData[24] = exp;
         ledData[0] = txData[14];
@@ -410,11 +413,12 @@ namespace robodog {
     }
 
 
+    //% blockId=robodog_headled_print
     //% block="show character $character on Robodog $what head LED"
     //% character.defl="A"
     //% group="LED"
     //% weight=88
-    export function headled_print(what: Deflib.left_right, character: string): void {
+    export function headLedPrint(what: deflib.HeadLedSide, character: string): void {
         txData[14] = (txData[14] & 0xC0) | 0x83;
         let aa = character.charCodeAt(0);
         let offsets = getHeadLedOffsets(what);
@@ -433,7 +437,7 @@ namespace robodog {
     //% data.shadow=robodog_headled_image_literal_v2
     //% group="LED"
     //% weight=87
-    export function headled_draw(what: Deflib.left_right, data: string): void {
+    export function headLedDraw(what: deflib.HeadLedSide, data: string): void {
         txData[14] = (txData[14] & 0xC0) | 0x81;
         let image = <Image><any>data;
         let encoded = encodeHeadLedImage(image);
@@ -449,14 +453,15 @@ namespace robodog {
     }
 
 
+    //% blockId=robodog_bodyled
     //% block="set Robodog body LED color to R:$r, G:$g, B:$b"
     //%r.defl=255 g.defl=255 b.defl=255
     //% group="LED"
     //% weight=85
-    export function bodyled(r: number, g: number, b: number): void {
-        txData[24] = Deflib.constrain(r, 0, 255);
-        txData[25] = Deflib.constrain(g, 0, 255);
-        txData[26] = Deflib.constrain(b, 0, 255);
+    export function bodyLed(r: number, g: number, b: number): void {
+        txData[24] = deflib.constrain(r, 0, 255);
+        txData[25] = deflib.constrain(g, 0, 255);
+        txData[26] = deflib.constrain(b, 0, 255);
 
         txData[28] = txData[32] = txData[36] = txData[24];
         txData[29] = txData[33] = txData[37] = txData[25];
@@ -469,52 +474,58 @@ namespace robodog {
     }
 
 
+    //% blockId=robodog_sound_play
     //% block="play sound effect $what at $volume volume"
     //% group="Sound"
     //% weight=79
-    export function sound_play(what: Deflib.mp3_list, volume: Deflib.mp3_volume): void {
+    export function soundPlay(what: deflib.SoundEffect, volume: deflib.SoundVolume): void {
         let id = (txData[7] & 0x80) == 0x80 ? 0x00 : 0x80;
         txData[7] = what | id;
         txData[8] = volume;
     }
 
 
+    //% blockId=robodog_get_button
     //% block="button"
     //% group="Sensors"
     //% weight=59
-    export function get_button(): number {
-        return button;
+    export function getButton(): boolean {
+        return buttonPressed;
     }
 
 
+    //% blockId=robodog_get_battery
     //% block="battery"
     //% group="Sensors"
     //% weight=58
-    export function get_battery(): number {
+    export function getBattery(): number {
         return battery;
     }
 
 
+    //% blockId=robodog_get_tof
     //% block="distance sensor"
     //% group="Sensors"
     //% weight=57
-    export function get_tof(): number {
+    export function getTof(): number {
         return tof;
     }
 
 
+    //% blockId=robodog_get_tilt
     //% block="read tilt as $what"
     //% group="Sensors"
     //% weight=56
-    export function get_tilt(what: Deflib.lr_fb): number {
-        return what == Deflib.lr_fb.lr ? roll : pitch;
+    export function getTilt(what: deflib.TiltAxis): number {
+        return what == deflib.TiltAxis.LeftRight ? roll : pitch;
     }
 
 
+    //% blockId=robodog_get_rotation
     //% block="rotation"
     //% group="Sensors"
     //% weight=55
-    export function get_rotation(): number {
+    export function getRotation(): number {
         return yaw;
     }
 }
