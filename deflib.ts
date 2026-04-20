@@ -1,4 +1,11 @@
 namespace deflib {
+    export enum RobodogMode {
+        //% block="UART"
+        Uart = 0,
+        //% block="radio"
+        Radio = 1
+    }
+
     export enum Posture {
         //% block="ready"
         Ready,
@@ -74,6 +81,39 @@ namespace deflib {
         LeftRight = 0,
         //% block="forward/backward"
         ForwardBackward = 1
+    }
+
+    export enum AiPositionAxis {
+        //% block="X"
+        X = 0,
+        //% block="Y"
+        Y = 1
+    }
+
+    export enum AiMode {
+        //% block="camera output"
+        Camera = 0,
+        //% block="face detection"
+        FaceDetect = 1,
+        //% block="face tracking"
+        FaceTracking = 2,
+        //% block="color detection"
+        ColorDetect = 3,
+        //% block="QR code"
+        QrCode = 4
+    }
+
+    export enum AiClass {
+        //% block="Class1"
+        Class1 = 1,
+        //% block="Class2"
+        Class2 = 2,
+        //% block="Class3"
+        Class3 = 3,
+        //% block="Class4"
+        Class4 = 4,
+        //% block="Class5"
+        Class5 = 5
     }
 
     export enum LedExpression {

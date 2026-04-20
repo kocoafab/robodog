@@ -10,5 +10,5 @@ _site
 *.tgz
 .header.json
 .simstate.json
-tests
-
+tests/
+docs/
