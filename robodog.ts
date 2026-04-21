@@ -32,6 +32,7 @@ namespace robodog {
     let radioInit = false;
     let radioTxIndex = 0;
     let isExtPacketEnabled = false;
+    let aiRadioActive = false;
     let rotationWaitRelative = false;
     let rotationWaitAbsolute = true;
     let rotationToleranceDeg = 5;
@@ -159,7 +160,7 @@ namespace robodog {
 
     loops.everyInterval(30, function () {
         ensurePacketsInitialized();
-        if (isRadioMode())
+        if (isRadioMode() || isExtPacketEnabled)
             serviceRadioTx();
     });
 
@@ -283,7 +284,7 @@ namespace robodog {
 
 
     radio.onReceivedBuffer(function (receivedBuffer) {
-        if (!isRadioMode())
+        if (!isRadioMode() && !aiRadioActive)
             return;
         if (checksum2(receivedBuffer) != receivedBuffer[1])
             return;
@@ -295,12 +296,19 @@ namespace robodog {
 
         if (receivedBuffer.length < 10)
             return;
-        updateRadioSensorState(receivedBuffer);
+        if (isRadioMode())
+            updateRadioSensorState(receivedBuffer);
+        else
+            cameraAlive = receivedBuffer[9] != 0;
         for (let p = 0; p < 10 && (10 + p) < receivedBuffer.length; p++)
             aiData[p] = receivedBuffer[10 + p];
     })
 
     function setActiveMode(mode: deflib.RobodogMode): void {
+        if (mode == deflib.RobodogMode.Uart) {
+            aiRadioActive = false;
+            isExtPacketEnabled = false;
+        }
         if (activeMode == mode)
             return;
         activeMode = mode;
@@ -463,7 +471,8 @@ namespace robodog {
 
     //% blockId=robodog_leg_bend
     //% block="set Robodog $legs walking height to $height"
-    //% legs.defl=deflib.LegGroup.AllLegs height.defl=60
+    //% legs.defl=deflib.LegGroup.AllLegs
+    //% height.min=20 height.max=90 height.defl=60
     //% group="Motion"
     //% weight=99
     export function legBend(legs: deflib.LegGroup, height: number): void {
@@ -483,7 +492,8 @@ namespace robodog {
 
 
     //% block="set Robodog $leg leg height to $height and foot forward/backward to $fb"
-    //% height.defl=60
+    //% height.min=20 height.max=90 height.defl=60
+    //% fb.min=-90 fb.max=90 fb.defl=0
     //% inlineInputMode=inline
     //% group="Motion"
     //% weight=98
@@ -503,6 +513,8 @@ namespace robodog {
 
 
     //% block="set Robodog $leg shoulder to $deg1 degrees and knee to $deg2 degrees"
+    //% deg1.min=-90 deg1.max=90 deg1.defl=0
+    //% deg2.min=-90 deg2.max=70 deg1.def2=0
     //% inlineInputMode=inline
     //% group="Motion"
     //% weight=97
@@ -523,7 +535,7 @@ namespace robodog {
 
 
     //% block="move Robodog $dir at speed $velocity"
-    //% velocity.defl=50
+    //% velocity.min=0 velocity.max=100 velocity.defl=50
     //% group="Motion"
     //% weight=96
     export function move(dir: deflib.MoveDirection, velocity: number): void {
@@ -535,7 +547,7 @@ namespace robodog {
 
     //% block="turn Robodog $dir by $deg degrees at speed $velocity"
     //% deg.min=0 deg.max=360 deg.defl=90
-    //% velocity.min=10 velocity.max=100 velocity.defl=100
+    //% velocity.min=0 velocity.max=100 velocity.defl=100
     //% inlineInputMode=inline
     //% group="Motion"
     //% weight=95
@@ -644,7 +656,7 @@ namespace robodog {
     //% group="AI Settings"
     //% weight=69
     export function aiDetection(what: deflib.AiMode): void {
-        setActiveMode(deflib.RobodogMode.Radio);
+        aiRadioActive = true;
         extTxData[7] = what | 0x10;
         isExtPacketEnabled = true;
     }
@@ -654,7 +666,7 @@ namespace robodog {
     //% group="AI Settings"
     //% weight=68
     export function faceTracking(what: deflib.AiClass): void {
-        setActiveMode(deflib.RobodogMode.Radio);
+        aiRadioActive = true;
         extTxData[7] = 0x12;
         extTxData[8] = what | 0x30;
         isExtPacketEnabled = true;
