@@ -113,6 +113,17 @@ namespace robodog {
         }
     }
 
+    function prepareHeadLedPayload(nextMode: number): void {
+        // ledData[0] keeps the last staged head LED mode while txData[14] may be alternating.
+        if ((ledData[0] & 0xBF) != nextMode)
+            clearHeadLedPayload();
+        else {
+            for (let n = 0; n < 16; n++)
+                txData[24 + n] = ledData[n + 2];
+        }
+        txData[14] = (txData[14] & 0xC0) | nextMode;
+    }
+
     function stageHeadLedPayload(): void {
         ledData[0] = txData[14];
         ledData[1] = ledData[1] | 0x80;
@@ -579,8 +590,7 @@ namespace robodog {
     //% group="LED"
     //% weight=89
     export function headLedExp(exp: deflib.LedExpression): void {
-        txData[14] = (txData[14] & 0xC0) | 0x82;
-        clearHeadLedPayload();
+        prepareHeadLedPayload(0x82);
         txData[24] = exp;
         stageHeadLedPayload();
     }
@@ -592,8 +602,7 @@ namespace robodog {
     //% group="LED"
     //% weight=88
     export function headLedPrint(what: deflib.HeadLedSide, character: string): void {
-        txData[14] = (txData[14] & 0xC0) | 0x83;
-        clearHeadLedPayload();
+        prepareHeadLedPayload(0x83);
         let aa = character.charCodeAt(0);
         let offsets = getHeadLedOffsets(what);
         for (let offset of offsets)
@@ -609,8 +618,7 @@ namespace robodog {
     //% group="LED"
     //% weight=87
     export function headLedDraw(what: deflib.HeadLedSide, data: string): void {
-        txData[14] = (txData[14] & 0xC0) | 0x81;
-        clearHeadLedPayload();
+        prepareHeadLedPayload(0x81);
         let image = <Image><any>data;
         let encoded = encodeHeadLedImage(image);
         let offsets = getHeadLedOffsets(what);
