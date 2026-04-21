@@ -346,6 +346,11 @@ namespace robodog {
         return value
     }
 
+    function normalizeUserRangeToInt(value: number, fromMin: number, fromMax: number, toMin: number, toMax: number): number {
+        value = deflib.constrain(value, fromMin, fromMax)
+        return Math.round(toMin + ((value - fromMin) * (toMax - toMin)) / (fromMax - fromMin))
+    }
+
     function normalizeHeading360(value: number): number {
         value = Math.round(value) % 360
         if (value < 0)
@@ -472,12 +477,12 @@ namespace robodog {
     //% blockId=robodog_leg_bend
     //% block="set Robodog $legs walking height to $height"
     //% legs.defl=deflib.LegGroup.AllLegs
-    //% height.min=20 height.max=90 height.defl=60
+    //% height.min=0 height.max=100 height.defl=70
     //% group="Motion"
     //% weight=99
     export function legBend(legs: deflib.LegGroup, height: number): void {
         checkModeChange(0, 1);
-        height = deflib.constrain(height, 20, 90);
+        height = normalizeUserRangeToInt(height, 0, 100, 20, 90);
         if (legs == 0)
             txData[16] = txData[17] = txData[18] = txData[19] = height;
         if (legs == 1)
@@ -492,15 +497,15 @@ namespace robodog {
 
 
     //% block="set Robodog $leg leg height to $height and foot forward/backward to $fb"
-    //% height.min=20 height.max=90 height.defl=60
-    //% fb.min=-90 fb.max=90 fb.defl=0
+    //% height.min=0 height.max=100 height.defl=70
+    //% fb.min=-100 fb.max=100 fb.defl=0
     //% inlineInputMode=inline
     //% group="Motion"
     //% weight=98
     export function leg(leg: deflib.LegSelection, height: number, fb: number): void {
         checkModeChange(-127, 2);
-        height = deflib.constrain(height, 20, 90);
-        fb = deflib.constrain(fb, -90, 90);
+        height = normalizeUserRangeToInt(height, 0, 100, 20, 90);
+        fb = normalizeUserRangeToInt(fb, -100, 100, -90, 90);
 
         let _pos = legPos[leg];
         for (let n = 0; n < 4; n++) {
