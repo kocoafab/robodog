@@ -37,10 +37,10 @@ namespace deflib {
         LeftFront = 0,
         //% block="left rear leg"
         LeftBack = 1,
-        //% block="right rear leg"
-        RightBack = 2,
         //% block="right front leg"
         RightFront = 3,
+        //% block="right rear leg"
+        RightBack = 2,
         //% block="front legs"
         FrontLegs = 4,
         //% block="rear legs"
