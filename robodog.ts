@@ -353,8 +353,7 @@ namespace robodog {
 
     function sanitizeRotationAngle(value: number): number {
         value = Math.abs(Math.round(value))
-        value = value % 360
-        return value
+        return deflib.constrain(value, 0, 360)
     }
 
     function normalizeUserRangeToInt(value: number, fromMin: number, fromMax: number, toMin: number, toMax: number): number {
