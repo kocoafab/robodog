@@ -440,7 +440,7 @@ namespace robodog {
     export function stop(): void {
         checkModeChange(0, 1);
         txData[20] = 0;
-        clearRotationCommand();
+        //clearRotationCommand();
     }
 
     //% blockId=robodog_rotation_absolute
