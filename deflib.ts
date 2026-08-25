@@ -154,16 +154,17 @@ namespace deflib {
         Si = 37,
         //% block="#do"
         SharpDo = 38,
-        //% block="user def1"
-        UserDef1 = 41,
-        //% block="user def2"
-        UserDef2 = 42,
-        //% block="user def3"
-        UserDef3 = 43,
-        //% block="user def4"
-        UserDef4 = 44,
-        //% block="user def5"
-        UserDef5 = 45
+        // 사용자 지정 메뉴 삭제
+        // //% block="user def1"
+        // UserDef1 = 41,
+        // //% block="user def2"
+        // UserDef2 = 42,
+        // //% block="user def3"
+        // UserDef3 = 43,
+        // //% block="user def4"
+        // UserDef4 = 44,
+        // //% block="user def5"
+        // UserDef5 = 45
     }
 
     export enum SoundVolume {
